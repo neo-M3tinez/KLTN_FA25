@@ -1,0 +1,73 @@
+name: "Privilege Escalation Response"
+description: "Respond to unauthorized privilege escalation attempts"
+severity: critical
+keywords:
+  - "privilege escalation"
+  - "sudo"
+  - "admin"
+  - "root"
+  - "elevation"
+  - "runas"
+
+workflow:
+  - triage_agent
+  - forensic_agent
+  - response_agent
+
+actions:
+  - action: "Review privileged access logs"
+    priority: critical
+    automated: true
+  
+  - action: "Disable compromised accounts"
+    priority: critical
+    automated: true
+  
+  - action: "Check for persistence mechanisms"
+    priority: high
+    automated: true
+  
+  - action: "Audit privileged user accounts"
+    priority: high
+    automated: true
+
+threat_intelligence:
+  check_ip: true
+  check_domain: false
+  check_hash: true
+  sources:
+    - virustotal
+    - abuseipdb
+
+siem_queries:
+  - name: "Privilege escalation attempts"
+    query: "event.action:(privilege_escalation OR sudo OR runas)"
+    timerange: "24h"
+  
+  - name: "New admin account creation"
+    query: "event.action:user_added AND user.roles:admin"
+    timerange: "7d"
+  
+  - name: "Suspicious process execution with high privileges"
+    query: "process.user:(root OR SYSTEM OR Administrator)"
+    timerange: "1h"
+  
+  - name: "Changes to privileged groups"
+    query: "event.action:group_modified AND group.name:(sudo OR Administrators)"
+    timerange: "7d"
+
+response:
+  containment:
+    - "Disable escalated accounts"
+    - "Remove unauthorized privileges"
+    - "Isolate affected systems"
+  
+  eradication:
+    - "Remove persistence mechanisms"
+    - "Patch exploited vulnerabilities"
+    - "Review and fix IAM policies"
+  
+  recovery:
+    - "Restore proper access controls"
+    - "Audit all privileged accounts"
+    - "Monitor for additional attempts"

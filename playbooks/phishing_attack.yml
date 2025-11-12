@@ -1,0 +1,77 @@
+name: "Phishing Attack Response"
+description: "Respond to phishing emails and credential harvesting"
+severity: high
+keywords:
+  - "phishing"
+  - "suspicious email"
+  - "credential harvest"
+  - "fake login"
+  - "spoofed"
+
+workflow:
+  - triage_agent
+  - email_agent
+  - forensic_agent
+  - response_agent
+
+actions:
+  - action: "Block sender email address"
+    priority: critical
+    automated: true
+  
+  - action: "Block malicious URLs/domains"
+    priority: critical
+    automated: true
+  
+  - action: "Quarantine related emails"
+    priority: high
+    automated: true
+  
+  - action: "Alert affected users"
+    priority: high
+    automated: true
+  
+  - action: "Reset credentials if compromised"
+    priority: critical
+    automated: false
+
+threat_intelligence:
+  check_ip: true
+  check_domain: true
+  check_hash: true
+  sources:
+    - virustotal
+    - abuseipdb
+
+siem_queries:
+  - name: "Similar emails from sender"
+    query: "email.from:{sender_email}"
+    timerange: "7d"
+  
+  - name: "Clicks on malicious URLs"
+    query: "url.full:{phishing_url}"
+    timerange: "24h"
+  
+  - name: "Credential submission attempts"
+    query: "destination.domain:{phishing_domain} AND event.category:authentication"
+    timerange: "24h"
+  
+  - name: "Email attachment downloads"
+    query: "email.attachments.file.hash.sha256:{attachment_hash}"
+    timerange: "7d"
+
+response:
+  containment:
+    - "Block malicious domains/IPs"
+    - "Quarantine phishing emails"
+    - "Disable compromised accounts"
+  
+  eradication:
+    - "Remove malware if downloaded"
+    - "Update email filters"
+    - "Train users on phishing awareness"
+  
+  recovery:
+    - "Reset affected credentials"
+    - "Monitor for account abuse"
+    - "Verify email security controls"

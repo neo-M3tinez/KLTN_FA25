@@ -1,0 +1,80 @@
+name: "Web Application Attack Response"
+description: "Respond to web application attacks (SQLi, XSS, etc.)"
+severity: high
+keywords:
+  - "web attack"
+  - "sql injection"
+  - "xss"
+  - "csrf"
+  - "command injection"
+  - "path traversal"
+  - "modsecurity"
+  - "waf"
+
+workflow:
+  - triage_agent
+  - webapp_agent
+  - forensic_agent
+  - response_agent
+
+actions:
+  - action: "Block attacking IP at WAF"
+    priority: critical
+    automated: true
+  
+  - action: "Review WAF logs for attack patterns"
+    priority: high
+    automated: true
+  
+  - action: "Check application logs for successful exploits"
+    priority: critical
+    automated: true
+  
+  - action: "Verify database integrity"
+    priority: high
+    automated: false
+  
+  - action: "Review recent code changes"
+    priority: medium
+    automated: false
+
+threat_intelligence:
+  check_ip: true
+  check_domain: false
+  check_hash: false
+  sources:
+    - abuseipdb
+    - virustotal
+
+siem_queries:
+  - name: "All requests from attacking IP"
+    query: "source.ip:{source_ip} AND event.category:web"
+    timerange: "24h"
+  
+  - name: "Successful HTTP responses to attacker"
+    query: "source.ip:{source_ip} AND http.response.status_code:[200 TO 299]"
+    timerange: "24h"
+  
+  - name: "Similar attack patterns from other IPs"
+    query: "http.request.body:*{attack_pattern}*"
+    timerange: "1h"
+  
+  - name: "Application errors during attack window"
+    query: "event.category:web AND log.level:error"
+    timerange: "1h"
+
+response:
+  containment:
+    - "Block source IP at WAF/firewall"
+    - "Enable stricter WAF rules"
+    - "Rate limit vulnerable endpoints"
+  
+  eradication:
+    - "Patch vulnerable code"
+    - "Update WAF rules"
+    - "Remove any webshells or backdoors"
+  
+  recovery:
+    - "Restore compromised data if needed"
+    - "Verify application integrity"
+    - "Monitor for continued attacks"

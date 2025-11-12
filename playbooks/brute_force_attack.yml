@@ -1,0 +1,72 @@
+name: "Brute Force Attack Response"
+description: "Respond to brute force authentication attempts"
+severity: high
+keywords:
+  - "brute force"
+  - "authentication"
+  - "failed login"
+  - "password"
+  - "ssh"
+  - "rdp"
+  - "ftp"
+
+workflow:
+  - triage_agent
+  - network_agent
+  - forensic_agent
+  - response_agent
+
+actions:
+  - action: "Block source IP at firewall"
+    priority: critical
+    automated: true
+  
+  - action: "Review authentication logs"
+    priority: high
+    automated: false
+  
+  - action: "Check for successful logins from same IP"
+    priority: high
+    automated: true
+  
+  - action: "Enable rate limiting on authentication endpoints"
+    priority: medium
+    automated: true
+  
+  - action: "Alert security team"
+    priority: high
+    automated: true
+
+threat_intelligence:
+  check_ip: true
+  check_domain: false
+  check_hash: false
+  sources:
+    - abuseipdb
+    - virustotal
+
+siem_queries:
+  - name: "Recent login attempts from source IP"
+    query: "source.ip:{source_ip} AND event.category:authentication"
+    timerange: "24h"
+  
+  - name: "Successful logins from source IP"
+    query: "source.ip:{source_ip} AND event.outcome:success"
+    timerange: "7d"
+  
+  - name: "Other IPs with similar behavior"
+    query: "event.category:authentication AND event.outcome:failure"
+    timerange: "1h"
+
+response:
+  containment:
+    - "Block source IP"
+    - "Disable compromised accounts"
+  
+  eradication:
+    - "Reset passwords for affected accounts"
+    - "Review and update authentication policies"
+  
+  recovery:
+    - "Monitor for additional attempts"
+    - "Verify account access restoration"

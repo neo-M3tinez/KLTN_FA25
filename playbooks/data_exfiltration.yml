@@ -1,0 +1,78 @@
+name: "Data Exfiltration Response"
+description: "Respond to suspicious data transfer activities"
+severity: critical
+keywords:
+  - "data exfiltration"
+  - "large transfer"
+  - "upload"
+  - "exfil"
+  - "unauthorized transfer"
+  - "data leak"
+
+workflow:
+  - triage_agent
+  - network_agent
+  - forensic_agent
+  - response_agent
+
+actions:
+  - action: "Block destination IP/domain"
+    priority: critical
+    automated: true
+  
+  - action: "Isolate source system"
+    priority: critical
+    automated: true
+  
+  - action: "Identify transferred data"
+    priority: critical
+    automated: false
+  
+  - action: "Review DLP alerts"
+    priority: high
+    automated: true
+  
+  - action: "Check for data staging activity"
+    priority: high
+    automated: true
+
+threat_intelligence:
+  check_ip: true
+  check_domain: true
+  check_hash: false
+  sources:
+    - abuseipdb
+    - virustotal
+
+siem_queries:
+  - name: "Large outbound transfers from source"
+    query: "source.ip:{source_ip} AND network.bytes:>10000000"
+    timerange: "24h"
+  
+  - name: "Connections to external storage services"
+    query: "destination.domain:(*dropbox* OR *drive.google* OR *onedrive*)"
+    timerange: "24h"
+  
+  - name: "File access before transfer"
+    query: "host.name:{host_name} AND event.category:file"
+    timerange: "1h"
+  
+  - name: "Compression/archiving activity"
+    query: "process.name:(zip OR rar OR 7z OR tar)"
+    timerange: "1h"
+
+response:
+  containment:
+    - "Block external connections"
+    - "Isolate affected systems"
+    - "Disable user credentials"
+  
+  eradication:
+    - "Remove attacker access"
+    - "Clean compromised systems"
+    - "Patch exploited vulnerabilities"
+  
+  recovery:
+    - "Assess data loss"
+    - "Implement DLP controls"
+    - "Monitor for additional exfiltration"
